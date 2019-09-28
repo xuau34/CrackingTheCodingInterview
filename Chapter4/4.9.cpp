@@ -1,6 +1,6 @@
 /*
-Time : O(N)
-Space: O(N * 2^( (N-1)/2 ))
+Time : O(N^2*(combinations))
+Space: O(N * combinations ))
  */
 
 #include <bits/stdc++.h>
@@ -40,39 +40,39 @@ void outputSeqs(vector<vector<int>>& seqs){
     cout << endl;
   }
 }
-vector<vector<int>> getConcate(vector<vector<int>> child, vector<vector<int>>& cache){
-  vector<vector<int>> seq;
-  for(int i = 0; i < child.size(); ++i){
-    for(int j = 0; j < cache.size(); ++j){
-      vector<int> order(cache[j].begin(), cache[j].end());
-      order.insert(order.end(), child[i].begin(), child[i].end());
-      seq.push_back(order);
-      if(cache[j].size() > 1){
-        order = cache[j];
-        order.insert(order.begin() + 1, child[i].begin(), child[i].end());
-        seq.push_back(order);
-      }
-    }
-  }
-  return seq;
-}
-
-vector<vector<int>> getBSTSeq(const TreeNode* node){
-  if(node == NULL) return vector<vector<int>>();
-  vector<vector<int>> seq, cache;
-  cache.push_back( {node -> data} );
-  seq = getConcate(getBSTSeq(node -> left), cache);
-  if(seq.size() != 0){
-    swap(seq, cache);
-    seq.clear();
-  }
-  seq = getConcate(getBSTSeq(node -> right), cache);
-  if(seq.size() == 0) return cache;
-  return seq;
-}
-
 vector<vector<int>> getBSTSeq(const Tree& tree){
-  return getBSTSeq(tree.root);
+  queue< pair<TreeNode*, TreeNode*> > que;
+  que.push( make_pair(tree.root, nullptr) );
+  vector<vector<int>> seqs, cache;
+  while(!que.empty()){
+    TreeNode* node = que.front().first;
+    TreeNode* parent = que.front().second;
+    que.pop();
+    if(node == NULL) continue;
+    if(parent == NULL){
+      seqs.push_back( vector<int>(1, node -> data) );
+    }else{
+      for(vector<int>& seq: seqs){
+        for(int i = seq.size() - 1; i >= 0; --i){
+          vector<int> copy(seq.size() + 1);
+          for(int j = 0; j < seq.size() + 1; ++j){
+            if(j <= i) copy[j] = seq[j];
+            else if(j == i + 1) copy[j] = node -> data;
+            else copy[j] = seq[j - 1];
+          }
+          cache.push_back(copy);
+          if(seq[i] == parent -> data){
+            break;
+          }
+        }
+      }
+      swap(seqs, cache);
+      cache.clear();
+    }
+    que.push( make_pair(node -> left, node) );
+    que.push( make_pair(node -> right, node) );
+  }
+  return seqs;
 }
 
 int main(void){
